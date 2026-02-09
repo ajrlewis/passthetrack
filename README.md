@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+<p align="center">
+  <img src="public/logo.png" alt="ClipCrush Logo" width="150">
+</p>
 
-## Getting Started
+# 🎵 ClipCrush
 
-First, run the development server:
+**ClipCrush** is a high-stakes music guessing game where teams battle to keep their point balance alive. It’s part DJ battle, part auditory endurance test.
+
+---
+
+## 🚀 Quick Start
+
+Get the game running locally in seconds:
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+# Clone the repository
+git clone git@github.com:ajrlewis/clipcrush.git
+
+# Install dependencies
+pnpm install
+
+# Start the development server
+pnpm run dev
+
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+---
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## 🎮 How to Play
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### 1. The Setup
 
-## Learn More
+* **Starting Balance:** Each team starts with **30 Points**.
+* **The Goal:** Be the last team standing. If your balance hits **0 or below**, you're out.
 
-To learn more about Next.js, take a look at the following resources:
+### 2. The Round Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Teams alternate between being the **DJ (Challenger)** and the **Listener (Guesser)**.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+* The **DJ** selects a song and prepares a 30-second snippet.
+* The **Listener** has **5 attempts** to identify the song.
+* **Genre Lock:** To keep it fair, the DJ must announce the **Genre** or **Decade** before the first clip plays.
 
-## Deploy on Vercel
+### 3. The Stakes (Point Deductions)
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+If the Listener guesses incorrectly, points are deducted based on the length of the snippet required:
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+| Attempt | Length Played | Point Penalty |
+| --- | --- | --- |
+| **Trial 1** | 1 Second | -1 Point |
+| **Trial 2** | 5 Seconds | -3 Points |
+| **Trial 3** | 10 Seconds | -5 Points |
+| **Trial 4** | 20 Seconds | -10 Points |
+| **Trial 5** | 30 Seconds | -15 Points |
+
+### 4. The Reward (Point Recovery)
+
+Speed pays off. Use these mechanics to stay in the game:
+
+* **Instant ID:** Guess correctly on the **1-second** clip to **gain +2 points** (up to the 30-point cap).
+* **Standard ID:** Correct guesses on Trials 2–5 result in **0 points lost**, and the turn passes.
+* **The "Skip" Mechanic:** Once per game, a team can skip a song for a flat **-5 point** penalty to avoid a deeper loss.
+
+---
+
+## 🏆 Winning the Game
+
+* **Elimination:** When a team’s bank reaches **0**, the opposing team is declared the **Game Champion**.
+* **Sudden Death:** If both teams fall below 5 points, the next round triggers **Double Stakes** (all point losses are doubled).
+
+---

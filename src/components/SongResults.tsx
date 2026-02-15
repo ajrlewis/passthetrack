@@ -41,13 +41,19 @@ export function SongResults({ results, onSelect, onSearchAgain }: Props) {
               className="w-full flex items-center gap-4 p-4 rounded-xl bg-black/40 border border-white/5 hover:bg-[#b026ff]/20 hover:border-[#b026ff]/40 transition-all text-left group"
             >
               <div className="relative w-14 h-14 rounded-lg overflow-hidden flex-shrink-0 bg-zinc-800">
-                <Image
-                  src={track.album.cover_medium}
-                  alt={track.title}
-                  width={56}
-                  height={56}
-                  className="object-cover"
-                />
+                {track.album?.cover_medium ? (
+                  <Image
+                    src={track.album.cover_medium}
+                    alt={track.title}
+                    width={56}
+                    height={56}
+                    className="object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center text-zinc-500 text-2xl" aria-hidden>
+                    ♪
+                  </div>
+                )}
               </div>
               <div className="flex-1 min-w-0">
                 <p className="font-semibold text-white truncate group-hover:text-[#ffe66d] transition-colors">

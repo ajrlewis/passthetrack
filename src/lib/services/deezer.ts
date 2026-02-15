@@ -6,24 +6,28 @@ export interface DeezerTrack {
     album: { cover_medium: string };
   }
   
-  export async function getTrack(query: string): Promise<DeezerTrack | null> {
-    if (!query?.trim()) return null;
-  
+export async function searchTracks(query: string): Promise<DeezerTrack[]> {
+    if (!query?.trim()) return [];
+
     try {
-      // We now call our OWN internal API route
       const response = await fetch(`/api/deezer?q=${encodeURIComponent(query)}`);
-      
+
       if (!response.ok) throw new Error('Network response was not ok');
-      
+
       const data = await response.json();
-  
-      if (!data.data || data.data.length === 0) return null;
-  
-      return data.data[0];
+
+      if (!data.data || data.data.length === 0) return [];
+
+      return data.data;
     } catch (error) {
-      console.error("Error fetching track:", error);
-      return null;
+      console.error("Error fetching tracks:", error);
+      return [];
     }
+  }
+
+  export async function getTrack(query: string): Promise<DeezerTrack | null> {
+    const tracks = await searchTracks(query);
+    return tracks.length > 0 ? tracks[0] : null;
   }
   
   export async function getSnippet(previewUrl: string, seconds: number): Promise<Blob | null> {

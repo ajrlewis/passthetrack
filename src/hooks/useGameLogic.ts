@@ -1,6 +1,6 @@
 // src/hooks/useGameLogic.ts
 import { useState, useRef } from 'react';
-import { getTrack, getSnippet, DeezerTrack } from '@/lib/services/deezer';
+import { searchTracks, getSnippet, DeezerTrack } from '@/lib/services/deezer';
 
 const TRIALS = [
   { level: 1, duration: 1, penalty: 1 },
@@ -10,7 +10,7 @@ const TRIALS = [
   { level: 5, duration: 30, penalty: 15 },
 ];
 
-export type Step = 'LOBBY' | 'START_SCREEN' | 'DJ_CHOOSE' | 'GUESSING' | 'GAME_OVER';
+export type Step = 'LOBBY' | 'START_SCREEN' | 'DJ_CHOOSE' | 'SONG_RESULTS' | 'GUESSING' | 'GAME_OVER';
 
 export function useGameLogic() {
   const [step, setStep] = useState<Step>('LOBBY');
@@ -20,22 +20,30 @@ export function useGameLogic() {
   const [trialIdx, setTrialIdx] = useState(0);
   const [targetTrack, setTargetTrack] = useState<DeezerTrack | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState<DeezerTrack[]>([]);
   const [loading, setLoading] = useState(false);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const selectSong = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    const track = await getTrack(searchQuery);
-    if (track) {
-      setTargetTrack(track);
-      setTrialIdx(0);
-      setStep('GUESSING');
-      setSearchQuery('');
-    } else {
-      alert("Song not found!");
-    }
+    const tracks = await searchTracks(searchQuery);
+    setSearchResults(tracks);
+    setStep('SONG_RESULTS');
     setLoading(false);
+  };
+
+  const confirmSong = (track: DeezerTrack) => {
+    setTargetTrack(track);
+    setSearchResults([]);
+    setSearchQuery('');
+    setTrialIdx(0);
+    setStep('GUESSING');
+  };
+
+  const backToSearch = () => {
+    setSearchResults([]);
+    setStep('DJ_CHOOSE');
   };
 
   const playClip = async () => {
@@ -85,7 +93,9 @@ export function useGameLogic() {
     balanceA, balanceB,
     trialIdx,
     searchQuery, setSearchQuery,
+    searchResults,
     loading,
-    selectSong, playClip, handleVerbalResult
+    selectSong, confirmSong, backToSearch,
+    playClip, handleVerbalResult
   };
 }

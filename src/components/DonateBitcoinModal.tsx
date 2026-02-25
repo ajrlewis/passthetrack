@@ -1,14 +1,15 @@
 import Image from 'next/image';
-import { useMemo, useRef, useState, type TouchEvent } from 'react';
+import QRCode from 'qrcode';
+import { useEffect, useRef, useState, type TouchEvent } from 'react';
 
 interface DonateBitcoinModalProps {
   onClose: () => void;
 }
 
 const BTC_DONATION_ADDRESS = 'bc1qdgk65xvc3c757mfkzwl7tt640j6xupuucadfdp';
-const LIGHTNING_ADDRESS = 'pay@passthetrack.com';
 const LIGHTNING_PRESET_AMOUNTS = [500, 1000, 5000] as const;
-const PAYMENT_METHODS = ['btc', 'lightningAddress', 'lightningInvoice'] as const;
+const PAYMENT_METHODS = ['btc', 'lightning'] as const;
+const QR_IMAGE_OPTIONS = { margin: 1, width: 320 } as const;
 type PaymentMethod = (typeof PAYMENT_METHODS)[number];
 
 interface LnurlInvoiceSuccessResponse {
@@ -42,45 +43,73 @@ function formatCompactPaymentValue(value: string): string {
 
 export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
   const [activeMethod, setActiveMethod] = useState<PaymentMethod>('btc');
-  const [copyStatus, setCopyStatus] = useState<{
-    btc: 'idle' | 'copied' | 'failed';
-    lightning: 'idle' | 'copied' | 'failed';
-  }>({
-    btc: 'idle',
-    lightning: 'idle',
-  });
+  const [btcCopyStatus, setBtcCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const [invoiceCopyStatus, setInvoiceCopyStatus] = useState<'idle' | 'copied' | 'failed'>('idle');
   const [lightningAmountSats, setLightningAmountSats] = useState('1000');
   const [invoiceStatus, setInvoiceStatus] = useState<'idle' | 'loading' | 'ready' | 'error'>('idle');
   const [invoiceError, setInvoiceError] = useState<string | null>(null);
   const [lightningInvoice, setLightningInvoice] = useState<string | null>(null);
+  const [btcQrSrc, setBtcQrSrc] = useState<string | null>(null);
+  const [lightningInvoiceQrSrc, setLightningInvoiceQrSrc] = useState<string | null>(null);
   const touchStartX = useRef<number | null>(null);
   const activeMethodIndex = PAYMENT_METHODS.indexOf(activeMethod);
-  const btcQrSrc = useMemo(() => {
-    const encoded = encodeURIComponent(BTC_DONATION_ADDRESS);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encoded}`;
+
+  useEffect(() => {
+    let cancelled = false;
+
+    const generateBtcQr = async () => {
+      try {
+        const dataUrl = await QRCode.toDataURL(BTC_DONATION_ADDRESS, QR_IMAGE_OPTIONS);
+        if (!cancelled) {
+          setBtcQrSrc(dataUrl);
+        }
+      } catch {
+        if (!cancelled) {
+          setBtcQrSrc(null);
+        }
+      }
+    };
+
+    void generateBtcQr();
+    return () => {
+      cancelled = true;
+    };
   }, []);
-  const lightningAddressQrSrc = useMemo(() => {
-    const paymentValue = `lightning:${LIGHTNING_ADDRESS}`;
-    const encoded = encodeURIComponent(paymentValue);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encoded}`;
-  }, []);
-  const lightningInvoiceQrSrc = useMemo(() => {
+
+  useEffect(() => {
+    let cancelled = false;
+
     if (!lightningInvoice) {
-      return null;
+      return () => {
+        cancelled = true;
+      };
     }
 
-    const paymentValue = `lightning:${lightningInvoice}`;
-    const encoded = encodeURIComponent(paymentValue);
-    return `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encoded}`;
+    const generateInvoiceQr = async () => {
+      try {
+        const dataUrl = await QRCode.toDataURL(`lightning:${lightningInvoice}`, QR_IMAGE_OPTIONS);
+        if (!cancelled) {
+          setLightningInvoiceQrSrc(dataUrl);
+        }
+      } catch {
+        if (!cancelled) {
+          setLightningInvoiceQrSrc(null);
+        }
+      }
+    };
+
+    void generateInvoiceQr();
+    return () => {
+      cancelled = true;
+    };
   }, [lightningInvoice]);
 
-  const handleCopyAddress = async (kind: 'btc' | 'lightning', value: string) => {
+  const handleCopyBtcAddress = async () => {
     try {
-      await navigator.clipboard.writeText(value);
-      setCopyStatus((current) => ({ ...current, [kind]: 'copied' }));
+      await navigator.clipboard.writeText(BTC_DONATION_ADDRESS);
+      setBtcCopyStatus('copied');
     } catch {
-      setCopyStatus((current) => ({ ...current, [kind]: 'failed' }));
+      setBtcCopyStatus('failed');
     }
   };
 
@@ -101,6 +130,7 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
     const digitsOnly = value.replace(/\D/g, '');
     setLightningAmountSats(digitsOnly);
     setLightningInvoice(null);
+    setLightningInvoiceQrSrc(null);
     setInvoiceStatus('idle');
     setInvoiceError(null);
     setInvoiceCopyStatus('idle');
@@ -109,6 +139,7 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
   const handlePresetAmount = (amountSats: number) => {
     setLightningAmountSats(String(amountSats));
     setLightningInvoice(null);
+    setLightningInvoiceQrSrc(null);
     setInvoiceStatus('idle');
     setInvoiceError(null);
     setInvoiceCopyStatus('idle');
@@ -120,6 +151,7 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
       setInvoiceStatus('error');
       setInvoiceError('Enter a valid amount in sats.');
       setLightningInvoice(null);
+      setLightningInvoiceQrSrc(null);
       return;
     }
 
@@ -127,6 +159,7 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
     setInvoiceStatus('loading');
     setInvoiceError(null);
     setLightningInvoice(null);
+    setLightningInvoiceQrSrc(null);
     setInvoiceCopyStatus('idle');
 
     try {
@@ -193,7 +226,7 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
           <div>
             <h2 className="text-white font-black text-lg">Support Pass the Track</h2>
             <p className="mt-1 text-[10px] uppercase tracking-[0.14em] text-zinc-300">
-              Bitcoin On-Chain + Lightning
+              Bitcoin On-Chain + Lightning Invoice
             </p>
           </div>
           <button
@@ -206,11 +239,9 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
           </button>
         </div>
 
-        <p className="mt-3 text-sm text-zinc-200/90">
-          Pick a payment method. Swipe on mobile or use tabs.
-        </p>
+        <p className="mt-3 text-sm text-zinc-200/90">Choose On-Chain or Lightning. Swipe on mobile or use tabs.</p>
 
-        <div className="mt-4 grid grid-cols-3 gap-1.5 rounded-xl border border-white/15 bg-black/30 p-1">
+        <div className="mt-4 grid grid-cols-2 gap-1.5 rounded-xl border border-white/15 bg-black/30 p-1">
           <button
             type="button"
             onClick={() => setActiveMethod('btc')}
@@ -224,25 +255,14 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
           </button>
           <button
             type="button"
-            onClick={() => setActiveMethod('lightningAddress')}
+            onClick={() => setActiveMethod('lightning')}
             className={`rounded-lg py-2 text-[9px] font-black uppercase tracking-[0.12em] transition ${
-              activeMethod === 'lightningAddress'
+              activeMethod === 'lightning'
                 ? 'bg-[#00d4ff] text-black'
                 : 'bg-black/20 text-zinc-300 hover:bg-black/35 hover:text-white'
             }`}
           >
-            LN Address
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveMethod('lightningInvoice')}
-            className={`rounded-lg py-2 text-[9px] font-black uppercase tracking-[0.12em] transition ${
-              activeMethod === 'lightningInvoice'
-                ? 'bg-[#00d4ff] text-black'
-                : 'bg-black/20 text-zinc-300 hover:bg-black/35 hover:text-white'
-            }`}
-          >
-            LN Invoice
+            Lightning
           </button>
         </div>
 
@@ -253,13 +273,20 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
           >
             <section className="w-full shrink-0">
               <div className="rounded-xl border border-white/15 bg-black/35 p-3 grid place-items-center">
-                <Image
-                  src={btcQrSrc}
-                  alt="Bitcoin donation address QR code"
-                  width={176}
-                  height={176}
-                  className="w-44 h-44 rounded-lg"
-                />
+                {btcQrSrc ? (
+                  <Image
+                    src={btcQrSrc}
+                    alt="Bitcoin donation address QR code"
+                    width={176}
+                    height={176}
+                    unoptimized
+                    className="w-44 h-44 rounded-lg"
+                  />
+                ) : (
+                  <p className="grid h-44 w-44 place-items-center rounded-lg border border-white/15 text-xs text-zinc-400">
+                    Generating QR...
+                  </p>
+                )}
               </div>
               <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-[#f7931a] font-bold">BTC Address</p>
               <div className="mt-2 flex items-center gap-2">
@@ -272,10 +299,12 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
                 <button
                   type="button"
                   aria-label="Copy bitcoin address"
-                  onClick={() => handleCopyAddress('btc', BTC_DONATION_ADDRESS)}
+                  onClick={() => {
+                    void handleCopyBtcAddress();
+                  }}
                   className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#f7931a]/70 bg-[#f7931a]/20 text-[#ffd59b] hover:bg-[#f7931a]/30 transition"
                 >
-                  {copyStatus.btc === 'copied' ? (
+                  {btcCopyStatus === 'copied' ? (
                     <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
                       <path d="M4 10.5l4 4L16 6.5" />
                     </svg>
@@ -287,10 +316,10 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
                   )}
                 </button>
               </div>
-              {copyStatus.btc === 'copied' && (
+              {btcCopyStatus === 'copied' && (
                 <p className="mt-2 text-xs text-[#ffd59b]">Copied to clipboard.</p>
               )}
-              {copyStatus.btc === 'failed' && (
+              {btcCopyStatus === 'failed' && (
                 <p className="mt-2 text-xs text-rose-300">Copy failed. Try again.</p>
               )}
               <a
@@ -302,58 +331,7 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
             </section>
 
             <section className="w-full shrink-0">
-              <div className="rounded-xl border border-white/15 bg-black/35 p-3 grid place-items-center">
-                <Image
-                  src={lightningAddressQrSrc}
-                  alt="Lightning address QR code"
-                  width={176}
-                  height={176}
-                  className="w-44 h-44 rounded-lg"
-                />
-              </div>
-
-              <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-[#00d4ff] font-bold">Lightning Address</p>
-              <div className="mt-2 flex items-center gap-2">
-                <p
-                  className="min-w-0 flex-1 rounded-lg border border-white/15 bg-black/35 px-3 py-2 text-sm text-zinc-100 font-mono truncate"
-                  title={LIGHTNING_ADDRESS}
-                >
-                  {formatCompactPaymentValue(LIGHTNING_ADDRESS)}
-                </p>
-                <button
-                  type="button"
-                  aria-label="Copy lightning address"
-                  onClick={() => handleCopyAddress('lightning', LIGHTNING_ADDRESS)}
-                  className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-[#00d4ff]/70 bg-[#00d4ff]/20 text-[#8beeff] hover:bg-[#00d4ff]/30 transition"
-                >
-                  {copyStatus.lightning === 'copied' ? (
-                    <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
-                      <path d="M4 10.5l4 4L16 6.5" />
-                    </svg>
-                  ) : (
-                    <svg viewBox="0 0 20 20" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.8">
-                      <rect x="7" y="3.5" width="9" height="11" rx="1.5" />
-                      <path d="M4 6.5V15a1.5 1.5 0 0 0 1.5 1.5H13" />
-                    </svg>
-                  )}
-                </button>
-              </div>
-              {copyStatus.lightning === 'copied' && (
-                <p className="mt-2 text-xs text-[#8beeff]">Copied to clipboard.</p>
-              )}
-              {copyStatus.lightning === 'failed' && (
-                <p className="mt-2 text-xs text-rose-300">Copy failed. Try again.</p>
-              )}
-              <a
-                href={`lightning:${LIGHTNING_ADDRESS}`}
-                className="mt-2 block w-full rounded-xl border border-white/20 bg-black/20 py-3 text-center text-xs font-black uppercase tracking-[0.12em] text-zinc-200 hover:border-[#00d4ff]/60 hover:text-[#8beeff] transition"
-              >
-                Open In Wallet App
-              </a>
-            </section>
-
-            <section className="w-full shrink-0">
-              <p className="text-[10px] uppercase tracking-[0.2em] text-[#00d4ff] font-bold">Invoice Amount (Sats)</p>
+              <p className="text-[10px] uppercase tracking-[0.2em] text-[#00d4ff] font-bold">Lightning Invoice (Sats)</p>
               <div className="mt-2 grid grid-cols-3 gap-2">
                 {LIGHTNING_PRESET_AMOUNTS.map((amount) => (
                   <button
@@ -395,16 +373,23 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
                 </p>
               )}
 
-              {lightningInvoice && lightningInvoiceQrSrc ? (
+              {lightningInvoice ? (
                 <>
                   <div className="mt-3 rounded-xl border border-white/15 bg-black/35 p-3 grid place-items-center">
-                    <Image
-                      src={lightningInvoiceQrSrc}
-                      alt="Lightning invoice QR code"
-                      width={176}
-                      height={176}
-                      className="w-44 h-44 rounded-lg"
-                    />
+                    {lightningInvoiceQrSrc ? (
+                      <Image
+                        src={lightningInvoiceQrSrc}
+                        alt="Lightning invoice QR code"
+                        width={176}
+                        height={176}
+                        unoptimized
+                        className="w-44 h-44 rounded-lg"
+                      />
+                    ) : (
+                      <p className="grid h-44 w-44 place-items-center rounded-lg border border-white/15 text-xs text-zinc-400">
+                        Generating QR...
+                      </p>
+                    )}
                   </div>
                   <p className="mt-3 text-[10px] uppercase tracking-[0.2em] text-[#00d4ff] font-bold">Lightning Invoice</p>
                   <div className="mt-2 flex items-center gap-2">
@@ -465,18 +450,10 @@ export function DonateBitcoinModal({ onClose }: DonateBitcoinModalProps) {
           />
           <button
             type="button"
-            aria-label="Show lightning address details"
-            onClick={() => setActiveMethod('lightningAddress')}
-            className={`h-1.5 rounded-full transition-all ${
-              activeMethod === 'lightningAddress' ? 'w-7 bg-[#00d4ff]' : 'w-1.5 bg-white/30'
-            }`}
-          />
-          <button
-            type="button"
             aria-label="Show lightning invoice details"
-            onClick={() => setActiveMethod('lightningInvoice')}
+            onClick={() => setActiveMethod('lightning')}
             className={`h-1.5 rounded-full transition-all ${
-              activeMethod === 'lightningInvoice' ? 'w-7 bg-[#00d4ff]' : 'w-1.5 bg-white/30'
+              activeMethod === 'lightning' ? 'w-7 bg-[#00d4ff]' : 'w-1.5 bg-white/30'
             }`}
           />
         </div>

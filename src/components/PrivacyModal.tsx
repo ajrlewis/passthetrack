@@ -41,8 +41,8 @@ export function PrivacyModal({ onClose, onOpenCookieSettings }: PrivacyModalProp
               <li>Vercel Analytics (`@vercel/analytics`) for site usage analytics.</li>
               <li>Deezer API (`api.deezer.com`) to search songs and fetch track metadata/previews.</li>
               <li>Wallet of Satoshi (`walletofsatoshi.com`) to generate Lightning invoices for donations.</li>
-              <li>QR Server (`api.qrserver.com`) to render QR images for payment requests.</li>
             </ul>
+            <p className="mt-2 text-zinc-300">Donation QR codes are generated locally in your browser.</p>
           </section>
 
           <section>

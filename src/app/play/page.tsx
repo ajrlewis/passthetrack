@@ -7,12 +7,14 @@ import { GameOver } from '@/components/GameOver';
 import { AppTopBar } from '@/components/AppTopBar';
 import { InstructionsModal } from '@/components/InstructionsModal';
 import { DonateBitcoinModal } from '@/components/DonateBitcoinModal';
+import { PrivacyModal } from '@/components/PrivacyModal';
 import { useGame } from '@/context/GameContext';
 
 export default function PlayPage() {
   const router = useRouter();
   const [showInstructions, setShowInstructions] = useState(false);
   const [showDonateModal, setShowDonateModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const {
     step,
     resetGame,
@@ -96,8 +98,19 @@ export default function PlayPage() {
         )}
       </div>
 
+      <footer className="w-full max-w-md mx-auto mt-6 pb-1 text-center">
+        <button
+          type="button"
+          onClick={() => setShowPrivacyModal(true)}
+          className="text-[11px] uppercase tracking-[0.14em] text-zinc-400 hover:text-[#00d4ff] transition-colors"
+        >
+          Privacy
+        </button>
+      </footer>
+
       {showInstructions && <InstructionsModal onClose={() => setShowInstructions(false)} />}
       {showDonateModal && <DonateBitcoinModal onClose={() => setShowDonateModal(false)} />}
+      {showPrivacyModal && <PrivacyModal onClose={() => setShowPrivacyModal(false)} />}
     </main>
   );
 }

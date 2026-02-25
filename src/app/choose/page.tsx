@@ -8,6 +8,7 @@ import Image from 'next/image';
 import { AppTopBar } from '@/components/AppTopBar';
 import { InstructionsModal } from '@/components/InstructionsModal';
 import { DonateBitcoinModal } from '@/components/DonateBitcoinModal';
+import { PrivacyModal } from '@/components/PrivacyModal';
 
 const INSTRUCTIONS_SEEN_KEY = 'pass-the-track.instructions_seen';
 const noopSubscribe = () => () => {};
@@ -16,6 +17,7 @@ export default function ChoosePage() {
   const router = useRouter();
   const [isManualInstructionsOpen, setIsManualInstructionsOpen] = useState(false);
   const [showDonateModal, setShowDonateModal] = useState(false);
+  const [showPrivacyModal, setShowPrivacyModal] = useState(false);
   const [isAutoInstructionsDismissed, setIsAutoInstructionsDismissed] = useState(false);
   const shouldShowInstructionsByDefault = useSyncExternalStore(
     noopSubscribe,
@@ -146,12 +148,26 @@ export default function ChoosePage() {
         )}
       </div>
 
+      <footer className="w-full max-w-md mx-auto mt-6 pb-1 text-center">
+        <button
+          type="button"
+          onClick={() => setShowPrivacyModal(true)}
+          className="text-[11px] uppercase tracking-[0.14em] text-zinc-400 hover:text-[#00d4ff] transition-colors"
+        >
+          Privacy
+        </button>
+      </footer>
+
       {showInstructions && (
         <InstructionsModal onClose={handleCloseInstructions} />
       )}
 
       {showDonateModal && (
         <DonateBitcoinModal onClose={() => setShowDonateModal(false)} />
+      )}
+
+      {showPrivacyModal && (
+        <PrivacyModal onClose={() => setShowPrivacyModal(false)} />
       )}
     </main>
   );

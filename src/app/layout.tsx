@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import { GameProvider } from '@/context/GameContext';
+import { Analytics } from '@vercel/analytics/react';
 import "./globals.css";
 
 const geistSans = Geist({
@@ -38,6 +39,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased bg-[#0a0a0a] text-white min-h-screen`}
       >
         <GameProvider>{children}</GameProvider>
+        <Analytics />
       </body>
     </html>
   );

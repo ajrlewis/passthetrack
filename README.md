@@ -1,72 +1,91 @@
 <p align="center">
-  <img src="public/logo.png" alt="SoundStake Logo" width="150">
+  <img src="public/branding/logo.png" alt="PassTheTrack logo" width="140" />
 </p>
 
-# 🎵 SoundStake
+# PassTheTrack
 
-**SoundStake** is a high-stakes music guessing game where teams battle to keep their point balance alive. It’s part DJ battle, part auditory endurance test.
+PassTheTrack is a browser-based music challenge game where players guess tracks from short audio previews, with scoring that rewards faster recognition and strategic play.
 
----
+Live site: https://www.passthetrack.com/
 
-## 🚀 Quick Start
+## Project Overview
 
-Get the game running locally in seconds:
+This repository contains the Next.js web app that powers PassTheTrack. Players search for songs, run timed clip rounds, and manage team scores in a fast turn-based flow.
+
+Core capabilities:
+
+- Song search via a server-side Deezer proxy route.
+- Round-based clip playback with progressive trial durations.
+- Team scoring logic with win/loss state management.
+- Privacy/cookie consent handling and analytics gating.
+- Optional Lightning donation flow via LNURL endpoints.
+
+## Tech Stack
+
+- Next.js 16 (App Router)
+- React 19 + TypeScript
+- Tailwind CSS 4
+- Vitest + Testing Library
+- Drizzle ORM + Neon Postgres (optional data layer tooling)
+
+## Download and Run Locally
+
+### Prerequisites
+
+- Node.js 20+
+- pnpm 9+
+
+### 1. Download the project
 
 ```bash
-# Clone the repository
-git clone git@github.com:ajrlewis/soundstake.git
-
-# Install dependencies
-pnpm install
-
-# Start the development server
-pnpm run dev
-
+git clone git@github.com:ajrlewis/passthetrack.git
+cd passthetrack
 ```
 
----
+If you prefer HTTPS:
 
-## 🎮 How to Play
+```bash
+git clone https://github.com/ajrlewis/passthetrack.git
+cd passthetrack
+```
 
-### 1. The Setup
+### 2. Install dependencies
 
-* **Starting Balance:** Each team starts with **30 Points**.
-* **The Goal:** Be the last team standing. If your balance hits **0 or below**, you're out.
+```bash
+pnpm install
+```
 
-### 2. The Round Structure
+### 3. Configure environment variables (recommended)
 
-Teams alternate between being the **DJ (Challenger)** and the **Listener (Guesser)**.
+```bash
+cp .env.example .env.local
+```
 
-* The **DJ** selects a song and prepares a 30-second snippet.
-* The **Listener** has **5 attempts** to identify the song.
-* **Genre Lock:** To keep it fair, the DJ must announce the **Genre** or **Decade** before the first clip plays.
+`DATABASE_URL` and `DATABASE_URL_UNPOOLED` are only required if you plan to run Drizzle database commands.
 
-### 3. The Stakes (Point Deductions)
+### 4. Start the app
 
-If the Listener guesses incorrectly, points are deducted based on the length of the snippet required:
+```bash
+pnpm dev
+```
 
-| Attempt | Length Played | Point Penalty |
-| --- | --- | --- |
-| **Trial 1** | 1 Second | 0 Point |
-| **Trial 2** | 3 Seconds | -3 Points |
-| **Trial 3** | 5 Seconds | -5 Points |
-| **Trial 4** | 10 Seconds | -10 Points |
-| **Trial 5** | 20 Seconds | -20 Points |
-| **Trial 6** | 30 Seconds | -25 Points |
+Open `http://localhost:3000` in your browser.
 
-### 4. The Reward (Point Recovery)
+## Available Scripts
 
-Speed pays off. Use these mechanics to stay in the game:
+- `pnpm dev` - Start local development server.
+- `pnpm build` - Build for production.
+- `pnpm start` - Run the production build.
+- `pnpm lint` - Run ESLint.
+- `pnpm test` - Run tests once.
+- `pnpm test:watch` - Run tests in watch mode.
+- `pnpm db:generate` - Generate Drizzle migrations.
+- `pnpm db:migrate` - Apply database migrations.
+- `pnpm db:check` - Validate migration state.
+- `pnpm db:studio` - Open Drizzle Studio.
 
-* **Instant ID:** Guess correctly on the **1-second** clip to **gain +2 points** (up to the 30-point cap).
-* **Standard ID:** Correct guesses on Trials 2–5 result in **0 points lost**, and the turn passes.
-* **The "Skip" Mechanic:** Once per game, a team can skip a song for a flat **-5 point** penalty to avoid a deeper loss.
+## Notes
 
----
-
-## 🏆 Winning the Game
-
-* **Elimination:** When a team’s bank reaches **0**, the opposing team is declared the **Game Champion**.
-* **Sudden Death:** If both teams fall below 5 points, the next round triggers **Double Stakes** (all point losses are doubled).
-
----
+- The home route redirects to `/choose`.
+- Game state is managed client-side through React context/hooks.
+- Deezer requests are proxied through `/api/deezer` to simplify client integration.

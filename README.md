@@ -20,6 +20,14 @@ Core capabilities:
 - Privacy/cookie consent handling and analytics gating.
 - Optional Lightning donation flow via LNURL endpoints.
 
+## How to Play
+
+1. You are the DJ: search and choose a song.
+2. Hand the phone to the guessers. Start with short clips, then go longer if needed.
+3. A win is any guess that is close enough: correct artist, correct title, or humming it well.
+4. After each round (win or loss), pass the phone to the next person/team to choose the next song.
+5. Keep rotating the phone every round. That is what makes it interactive.
+
 ## Tech Stack
 
 - Next.js 16 (App Router)
